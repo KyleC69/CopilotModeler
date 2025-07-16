@@ -1,16 +1,9 @@
 {
   "profiles": {
-    "DataModeler": {
-      "commandName": "Project",
-      "commandLineArgs": "extract"
-    },
-    "2000": {
-      "commandName": "Project",
-      "commandLineArgs": "extract 2000 25 2"
-    },
     "Train": {
       "commandName": "Project",
-      "commandLineArgs": "train"
+      "commandLineArgs": "train",
+      "hotReloadEnabled": false
     }
   }
 }
