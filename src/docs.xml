@@ -1,0 +1,1066 @@
+<?xml version="1.0"?>
+
+<doc>
+	<assembly>
+		<name>CopilotModeler</name>
+	</assembly>
+	<members>
+		<member name="T:CopilotModeler.DataExtraction.DataMining">
+			<summary>
+				Provides methods for data mining and analysis of C# code from MSBuild projects and GitHub repositories.
+			</summary>
+		</member>
+		<member
+			name="M:CopilotModeler.DataExtraction.DataMining.AnalyzeMSbuildProject(Microsoft.CodeAnalysis.Project,CopilotModeler.Services.RoslynCodeAnalyzer,Microsoft.EntityFrameworkCore.IDbContextFactory{CopilotModeler.Data.AIDbContext},Microsoft.Extensions.Logging.ILogger{CopilotModeler.Program})">
+			<summary>
+				Analyzes an MSBuild project by processing its documents, extracting code features,
+				and persisting the results to the database.
+			</summary>
+			<param name="project">
+				The MSBuild project to analyze, represented as a Roslyn <see cref="T:Microsoft.CodeAnalysis.Project" />.
+			</param>
+			<param name="roslynAnalyzer">
+				An instance of <see cref="T:CopilotModeler.Services.RoslynCodeAnalyzer" /> used for static code analysis.
+			</param>
+			<param name="dbContextFactory">
+				A factory for creating instances of <see cref="T:CopilotModeler.Data.AIDbContext" /> to interact with the database.
+			</param>
+			<param name="logger">
+				A logger instance for logging information, warnings, and errors during the analysis process.
+			</param>
+			<returns>
+				A <see cref="T:System.Threading.Tasks.Task" /> representing the asynchronous operation.
+			</returns>
+			<remarks>
+				This method processes each document in the project, performs static analysis using the Roslyn analyzer,
+				and saves the extracted data to the database. If the project contains no documents, an error is logged.
+			</remarks>
+		</member>
+		<member name="M:CopilotModeler.DataExtraction.DataMining.CalculateSha256Hash(System.String)">
+			<summary>
+				Computes the SHA-256 hash of the provided string.
+			</summary>
+			<param name="rawData">The input string to compute the hash for.</param>
+			<returns>A string representing the hexadecimal SHA-256 hash of the input data.</returns>
+		</member>
+		<member name="M:CopilotModeler.DataExtraction.DataMining.CreateDocumentFromCode(System.String,System.String)">
+			<summary>
+				Creates a Roslyn <see cref="T:Microsoft.CodeAnalysis.Document" /> instance from the provided source code.
+			</summary>
+			<param name="code">
+				The source code to be included in the document.
+			</param>
+			<param name="fileName">
+				The name of the in-memory file to associate with the document. Defaults to "InMemoryFile.cs".
+			</param>
+			<returns>
+				A <see cref="T:Microsoft.CodeAnalysis.Document" /> containing the specified source code.
+			</returns>
+		</member>
+		<member name="M:CopilotModeler.DataExtraction.DataMining.LoadSolutionFile(System.String)">
+			<summary>
+				Loads a solution or project file into a Roslyn <see cref="T:Microsoft.CodeAnalysis.Solution" /> instance.
+			</summary>
+			<param name="solutionFile">
+				The path to the solution (.sln) or project (.csproj) file to be loaded.
+			</param>
+			<returns>
+				A <see cref="T:Microsoft.CodeAnalysis.Solution" /> instance representing the loaded solution or project.
+			</returns>
+		</member>
+		<member
+			name="M:CopilotModeler.DataExtraction.DataMining.ProcessGitHubRepoAsync(System.Collections.Generic.List{Octokit.Repository},Microsoft.Extensions.Logging.ILogger{CopilotModeler.Program},CopilotModeler.Services.GitHubExtractor,CopilotModeler.Services.RoslynCodeAnalyzer,Microsoft.EntityFrameworkCore.IDbContextFactory{CopilotModeler.Data.AIDbContext})">
+			<summary>
+				Processes a list of public C# repositories from GitHub by analyzing their code and storing the results in a
+				database.This method attempts to load project/sln file from archive. can be problematic, needs more testing.
+			</summary>
+			<param name="csharpRepos">A list of GitHub repositories containing C# projects to be processed.</param>
+			<param name="logger">The logger instance for logging information and errors during processing.</param>
+			<param name="gitHubExtractor">The service responsible for extracting repository data from GitHub.</param>
+			<param name="roslynAnalyzer">The analyzer used to process and analyze the C# code in the repositories.</param>
+			<param name="dbContextFactory">A factory for creating database context instances to store analysis results.</param>
+			<returns>A task representing the asynchronous operation.</returns>
+		</member>
+		<member
+			name="M:CopilotModeler.DataExtraction.DataMining.ProcessReposRawAsync(Microsoft.Extensions.Logging.ILogger,Microsoft.EntityFrameworkCore.IDbContextFactory{CopilotModeler.Data.AIDbContext},CopilotModeler.Services.GitHubExtractor,CopilotModeler.Services.RoslynCodeAnalyzer,System.Collections.Generic.List{Octokit.Repository})">
+			<summary>
+				Processes a list of GitHub repositories by extracting C# file paths, analyzing their content,
+				and persisting the results into the database.
+			</summary>
+			<param name="logger">
+				The logger instance used for logging information during the processing of repositories.
+			</param>
+			<param name="dbContextFactory">
+				A factory for creating instances of <see cref="T:CopilotModeler.Data.AIDbContext" /> to interact with the database.
+			</param>
+			<param name="gitHubExtractor">
+				The service responsible for extracting file paths and file content from GitHub repositories.
+			</param>
+			<param name="roslynAnalyzer">
+				The analyzer used for processing and analyzing the content of C# files.
+			</param>
+			<param name="csharpRepos">
+				A list of GitHub repositories to be processed.
+			</param>
+			<returns>
+				A task that represents the asynchronous operation.
+			</returns>
+		</member>
+		<member name="T:CopilotModeler.Data.AIDbContextFactory">
+			<summary>
+				Factory class for creating instances of <see cref="T:CopilotModeler.Data.AIDbContext" /> at design time.
+			</summary>
+			<remarks>
+				This class is primarily used by tools such as Entity Framework Core migrations to
+				create a database context instance when the application is not running.
+				It retrieves the connection string from the configuration file and configures the
+				<see cref="T:CopilotModeler.Data.AIDbContext" /> with the appropriate options.
+			</remarks>
+		</member>
+		<member name="M:CopilotModeler.Data.AIDbContextFactory.CreateDbContext(System.String[])">
+			<summary>
+				Creates a new instance of <see cref="T:CopilotModeler.Data.AIDbContext" /> with the provided arguments.
+			</summary>
+			<param name="args">Command-line arguments (not used).</param>
+			<returns>An instance of <see cref="T:CopilotModeler.Data.AIDbContext" />.</returns>
+		</member>
+		<member name="T:CopilotModeler.Data.AIDbContext">
+			<summary>
+				Entity Framework Core database context for the AI Coding Helper application.
+				Manages persistence and relationships for code snippets, chat conversations,
+				and chat messages.
+			</summary>
+		</member>
+		<member
+			name="M:CopilotModeler.Data.AIDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{CopilotModeler.Data.AIDbContext},Microsoft.Extensions.Configuration.IConfiguration)">
+			<summary>
+				Initializes a new instance of the <see cref="T:CopilotModeler.Data.AIDbContext" /> class.
+			</summary>
+			<param name="options">The options to be used by a <see cref="T:Microsoft.EntityFrameworkCore.DbContext" />.</param>
+			<param name="configuration">The configuration instance for connection strings (optional).</param>
+		</member>
+		<member name="P:CopilotModeler.Data.AIDbContext.CodeSnippets">
+			<summary>
+				Gets or sets the code snippets in the database.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.AIDbContext.ChatConversations">
+			<summary>
+				Gets or sets the chat conversations in the database.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.AIDbContext.ChatMessages">
+			<summary>
+				Gets or sets the chat messages in the database.
+			</summary>
+		</member>
+		<member name="M:CopilotModeler.Data.AIDbContext.OnConfiguring(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder)">
+			<summary>
+				Configures the database context with the connection string from configuration.
+			</summary>
+			<param name="optionsBuilder">The options builder for the context.</param>
+		</member>
+		<member name="M:CopilotModeler.Data.AIDbContext.OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder)">
+			<summary>
+				Configures the entity relationships and properties.
+			</summary>
+			<param name="modelBuilder">The model builder for the context.</param>
+		</member>
+		<member name="T:CopilotModeler.Data.Models.CodeSnippet">
+			<summary>
+				Represents a code snippet and its associated analysis artifacts, metadata,
+				and embeddings for storage and retrieval in the database.
+				•	Intent:
+				To persist a code snippet along with its analysis results(AST, CFG, DFG, metrics), embeddings for semantic search,
+				and metadata such as file location, hash, and source.
+				•	Key Features:
+				•	Stores original and normalized code.
+				•	Holds serialized analysis artifacts (AST, CFG, DFG, metrics).
+				•	Supports embeddings for ML/semantic search.
+				•	Maintains deduplication via code hash.
+				•	Tracks source and modification time.
+				•	Links to related chat messages.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.Id">
+			<summary>
+				Gets or sets the unique identifier for the code snippet.
+			</summary>
+			<remarks>
+				This property serves as the primary key for the <see cref="T:CopilotModeler.Data.Models.CodeSnippet" /> entity.
+				It uniquely identifies each code snippet stored in the database.
+			</remarks>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.RawCode">
+			<summary>
+				Gets or sets the original C# code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.FilePath">
+			<summary>
+				Gets or sets the original file path of the code snippet.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.LineStart">
+			<summary>
+				Gets or sets the start line in the original file.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.LineEnd">
+			<summary>
+				Gets or sets the end line in the original file.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.ASTJson">
+			<summary>
+				Gets or sets the serialized Abstract Syntax Tree (AST) in JSON format.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.CFGJson">
+			<summary>
+				Gets or sets the serialized Control Flow Graph (CFG) in JSON format.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.DFGJson">
+			<summary>
+				Gets or sets the serialized Data Flow Graph (DFG) in JSON format.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.Embeddings">
+			<summary>
+				Gets or sets the embeddings for semantic search.
+				Stored as VARBINARY(MAX) for SQL Server to hold byte array.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.MetricsJson">
+			<summary>
+				Gets or sets the serialized metrics (Cyclomatic Complexity, Line Count, etc.) in JSON format.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.NormalizedCode">
+			<summary>
+				Gets or sets the anonymized/cleaned code for training.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.AnonymizationMapJson">
+			<summary>
+				Gets or sets the mapping for anonymized identifiers in JSON format.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.Hash">
+			<summary>
+				Gets or sets the hash of RawCode for deduplication.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.LastModifiedDate">
+			<summary>
+				Gets or sets the last modification timestamp.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.SourceOrigin">
+			<summary>
+				Gets or sets the origin of the code (e.g., "GitHub", "StackOverflow").
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeSnippet.RelatedChatMessages">
+			<summary>
+				Gets or sets the collection of related chat messages if a snippet is referenced in chat.
+			</summary>
+		</member>
+		<member name="T:CopilotModeler.Data.Models.ChatConversation">
+			<summary>
+				Represents a chat conversation, including its messages, associated user,
+				optional summary, and linkage to a related code snippet.
+				intent: To model a user/AI/system conversation, optionally linked to a code snippet, for use in chat-based code
+				review, assistance, or annotation scenarios.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatConversation.Id">
+			<summary>
+				Gets or sets the unique identifier for the chat conversation.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatConversation.StartTime">
+			<summary>
+				Gets or sets the start time of the conversation.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatConversation.EndTime">
+			<summary>
+				Gets or sets the end time of the conversation, if ended.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatConversation.UserId">
+			<summary>
+				Gets or sets the user identifier associated with the conversation.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatConversation.Summary">
+			<summary>
+				Gets or sets the optional summary of the conversation.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatConversation.AssociatedCodeSnippetId">
+			<summary>
+				Gets or sets the ID of the associated code snippet, if any.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatConversation.AssociatedCodeSnippet">
+			<summary>
+				Gets or sets the associated code snippet for the conversation.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatConversation.Messages">
+			<summary>
+				Gets or sets the collection of messages in the conversation.
+			</summary>
+		</member>
+		<member name="T:CopilotModeler.Data.Models.ChatMessage">
+			<summary>
+				Represents a single message within a chat conversation, including sender role,
+				content, optional code snippet reference, and content embedding for semantic search.
+				•	Intent:
+				To store individual chat messages, their metadata, and relationships to conversations and code snippets, supporting
+				both plain text and code content.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.Id">
+			<summary>
+				Gets or sets the unique identifier for the chat message.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.ConversationId">
+			<summary>
+				Gets or sets the identifier of the conversation this message belongs to.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.Conversation">
+			<summary>
+				Gets or sets the conversation navigation property.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.Timestamp">
+			<summary>
+				Gets or sets the timestamp when the message was created.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.SenderRole">
+			<summary>
+				Gets or sets the sender role (e.g., "User", "AI", "System", "Tool").
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.Content">
+			<summary>
+				Gets or sets the content of the chat message.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.ContentEmbedding">
+			<summary>
+				Gets or sets the content embedding for semantic search.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.IsCodeSnippet">
+			<summary>
+				Gets or sets a value indicating whether the message contains a code snippet.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.ReferencedCodeSnippetId">
+			<summary>
+				Gets or sets the referenced code snippet identifier, if any.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.ChatMessage.ReferencedCodeSnippet">
+			<summary>
+				Gets or sets the referenced code snippet navigation property.
+			</summary>
+		</member>
+		<member name="T:CopilotModeler.Data.Models.Metrics">
+			<summary>
+				Represents a collection of metrics used to analyze and evaluate code quality and structure.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.LineCount">
+			<summary>
+				Gets or sets the total number of lines in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.MethodCount">
+			<summary>
+				Gets or sets the total number of methods in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.TotalParameterCount">
+			<summary>
+				Gets or sets the total number of parameters across all methods.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.ClassCount">
+			<summary>
+				Gets or sets the total number of classes in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.PropertyCount">
+			<summary>
+				Gets or sets the total number of properties in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.FieldCount">
+			<summary>
+				Gets or sets the total number of fields in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.AverageMethodLength">
+			<summary>
+				Gets or sets the average length of methods in lines.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.MaxMethodLength">
+			<summary>
+				Gets or sets the maximum method length in lines.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.MinMethodLength">
+			<summary>
+				Gets or sets the minimum method length in lines.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.Metrics.CyclomaticComplexity">
+			<summary>
+				Gets or sets the cyclomatic complexity of the code.
+			</summary>
+		</member>
+		<member name="T:CopilotModeler.Data.Models.CodeQualityInput">
+			<summary>
+				Expanded input model for ML.NET training, including more code metrics and source information.
+				<para>
+					This class is used as an input schema for ML.NET pipelines to evaluate code quality.
+					It contains normalized code, various code metrics, the source origin, and a label indicating high quality.
+				</para>
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.NormalizedCode">
+			<summary>
+				Gets or sets the normalized (anonymized/cleaned) code used for training.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.CyclomaticComplexity">
+			<summary>
+				Gets or sets the cyclomatic complexity of the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.LineCount">
+			<summary>
+				Gets or sets the total number of lines in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.MethodCount">
+			<summary>
+				Gets or sets the total number of methods in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.TotalParameterCount">
+			<summary>
+				Gets or sets the total number of parameters across all methods.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.ClassCount">
+			<summary>
+				Gets or sets the total number of classes in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.PropertyCount">
+			<summary>
+				Gets or sets the total number of properties in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.FieldCount">
+			<summary>
+				Gets or sets the total number of fields in the code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.AverageMethodLength">
+			<summary>
+				Gets or sets the average length of methods in lines.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.MaxMethodLength">
+			<summary>
+				Gets or sets the maximum method length in lines.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.MinMethodLength">
+			<summary>
+				Gets or sets the minimum method length in lines.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.SourceOrigin">
+			<summary>
+				Gets or sets the origin of the code (e.g., "GitHub", "StackOverflow").
+				Used as a categorical feature.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityInput.IsHighQuality">
+			<summary>
+				Gets or sets a value indicating whether the code is considered high quality.
+				Used as the label for ML.NET training.
+			</summary>
+		</member>
+		<member name="T:CopilotModeler.Data.Models.CodeQualityPrediction">
+			<summary>
+				/// Represents the input data for code quality prediction in ML.NET.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityPrediction.Prediction">
+			<summary>
+				/// Gets or sets the unique identifier for the code snippet.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Data.Models.CodeQualityPrediction.Score">
+			<summary>
+				/// Gets or sets the score of the prediction, indicating the confidence level of the model.
+			</summary>
+		</member>
+		<member name="T:CopilotModeler.Program">
+			<summary>
+				Main orchestration class for the AI Coding Agent Model Builder.
+				Handles configuration, dependency injection, data extraction from GitHub,
+				code analysis, database persistence, and ML.NET model training.
+			</summary>
+		</member>
+		<member name="M:CopilotModeler.Program.BuildConfigurationRoot">
+			<summary>
+				Builds and configures the application's <see cref="T:Microsoft.Extensions.Configuration.IConfigurationRoot" />.
+			</summary>
+			<remarks>
+				This method sets up the configuration system for the application by:
+				- Setting the base path to the current directory.
+				- Loading configuration settings from the "appsettings.json" file.
+				- Adding environment variables to the configuration.
+			</remarks>
+			<returns>
+				An instance of <see cref="T:Microsoft.Extensions.Configuration.IConfigurationRoot" /> containing the application's configuration settings.
+			</returns>
+		</member>
+		<member name="M:CopilotModeler.Program.BuildServiceProvider(Microsoft.Extensions.Configuration.IConfigurationRoot)">
+			<summary>
+				Configures and builds the service provider for dependency injection.
+			</summary>
+			<param name="configuration">
+				The configuration root containing application settings, such as connection strings and API keys.
+			</param>
+			<returns>
+				A fully configured <see cref="T:Microsoft.Extensions.DependencyInjection.ServiceProvider" /> instance for resolving application dependencies.
+			</returns>
+		</member>
+		<member
+			name="M:CopilotModeler.Program.EnsureDatabaseStatus(Microsoft.Extensions.DependencyInjection.ServiceProvider,Microsoft.Extensions.Logging.ILogger{CopilotModeler.Program})">
+			<summary>
+				Ensures that the database is properly set up by applying any pending migrations.
+				Logs the status of the migration process and handles any errors that occur during the operation.
+			</summary>
+			<param name="serviceProvider">
+				The <see cref="T:Microsoft.Extensions.DependencyInjection.ServiceProvider" /> instance used to resolve the required services.
+			</param>
+			<param name="logger">
+				The <see cref="T:Microsoft.Extensions.Logging.ILogger`1" /> instance used for logging migration status and errors.
+			</param>
+			<returns>
+				A <see cref="T:System.Threading.Tasks.Task`1" /> that represents the asynchronous operation.
+				Returns <c>true</c> if an error occurs during the migration process; otherwise, <c>false</c>.
+			</returns>
+		</member>
+		<member name="M:CopilotModeler.Program.Main(System.String[])">
+			<summary>
+				/     The main entry point for the AI Coding Agent Model Builder application.
+			</summary>
+			<param name="args"></param>
+			<returns></returns>
+		</member>
+		<member name="T:CopilotModeler.Services.GitHubExtractor">
+			<summary>
+				Provides functionality to interact with GitHub repositories, including searching for repositories,
+				retrieving file paths, fetching file content, and extracting default branch project details.
+			</summary>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.GitHubExtractor.#ctor(System.String,Microsoft.Extensions.Logging.ILogger{CopilotModeler.Services.GitHubExtractor})">
+			<summary>
+				Initializes a new instance of the <see cref="T:CopilotModeler.Services.GitHubExtractor" /> class.
+			</summary>
+			<param name="accessToken">
+				The personal access token used for authenticating with the GitHub API.
+			</param>
+			<param name="logger">
+				The logger instance used for logging operations within the <see cref="T:CopilotModeler.Services.GitHubExtractor" />
+				.
+			</param>
+		</member>
+		<member name="M:CopilotModeler.Services.GitHubExtractor.ExtractDefaultBranchProjectAsync(Octokit.Repository)">
+			<summary>
+				Retrieves the default branch project archive for a given GitHub repository and extracts contents into a temporary
+				folder
+				the path of the folder is returned.
+			</summary>
+			<param name="repo">The GitHub repository for which to retrieve the default branch project archive.</param>
+			<returns>
+				A string representing the location of the project archive of the given repository.
+			</returns>
+			<exception cref="T:Octokit.ApiException">
+				Thrown when an error occurs while communicating with the GitHub API.
+			</exception>
+			<exception cref="T:System.Exception">
+				Thrown when an unexpected error occurs during the operation.
+			</exception>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.GitHubExtractor.GetCSharpRepositoryFilePaths(System.Int64,System.String,System.String)">
+			<summary>
+				Gets C# file paths for a given repository.
+			</summary>
+			<param name="repositoryId">The GitHub repository ID.</param>
+			<param name="owner">The repository owner's login.</param>
+			<param name="repoName">The repository name.</param>
+			<returns>A list of TreeItem objects representing C# files.</returns>
+		</member>
+		<member name="M:CopilotModeler.Services.GitHubExtractor.GetFileContentAsync(Octokit.Repository,Octokit.TreeItem)">
+			<summary>
+				Retrieves the raw content of a file from a GitHub repository using its blob information.
+			</summary>
+			<param name="repos">
+				The <see cref="T:Octokit.Repository" /> instance representing the GitHub repository containing the file.
+			</param>
+			<param name="gitBlob">
+				The <see cref="T:Octokit.TreeItem" /> representing the file's blob information, including its SHA and path.
+			</param>
+			<returns>
+				A <see cref="T:System.Threading.Tasks.Task`1" /> representing the asynchronous operation. The result contains the file content as a
+				<see cref="T:System.String" />, or <c>null</c> if an error occurs during retrieval.
+			</returns>
+			<exception cref="T:Octokit.RateLimitExceededException">
+				Thrown when the GitHub API rate limit is exceeded. The method will pause and retry the operation after the rate
+				limit resets.
+			</exception>
+			<remarks>
+				The method handles Base64-encoded content and decodes it to UTF-8 if necessary. It also logs errors and retries
+				operations when rate limits are exceeded.
+			</remarks>
+		</member>
+		<member name="M:CopilotModeler.Services.GitHubExtractor.GetRepositoryArchiveAsync(System.Int64)">
+			<summary>
+				Retrieves the ZIP archive (as a byte array) for the default branch of the given repository using Octokit.
+			</summary>
+			<param name="repositoryId">The GitHub repository ID.</param>
+			<returns>Byte array containing the ZIP archive, or throws if retrieval fails.</returns>
+		</member>
+		<member name="M:CopilotModeler.Services.GitHubExtractor.GetTimeDifference(System.DateTime,System.DateTime)">
+			<summary>
+				Calculates the time difference between two specified <see cref="T:System.DateTime" /> values.
+				---Formula = End - Start
+			</summary>
+			<param name="startTime">
+				The start time of the interval.
+			</param>
+			<param name="endTime">
+				The end time of the interval.
+			</param>
+			<returns>
+				A <see cref="T:System.TimeSpan" /> representing the difference between <paramref name="endTime" /> and
+				<paramref name="startTime" />.
+			</returns>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.GitHubExtractor.SearchCsharpRepositoriesAsync(System.Int32,System.Int32,System.Int32,System.String)">
+			<summary>
+				Searches for C# repositories on GitHub based on star count.
+			</summary>
+			<param name="minStars">Minimum stars for a repository to be included.</param>
+			<param name="resultsPerPage">Number of results per page.</param>
+			<param name="maxPages">Maximum number of pages to fetch.</param>
+			<param name="searchTerm">Search term to filter repositories.</param>
+			<returns>A list of Repository objects.</returns>
+		</member>
+		<member name="T:CopilotModeler.Services.MlNetTrainer">
+			<summary>
+				Zero-dependency ML.NET trainer for code quality prediction.
+			</summary>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.MlNetTrainer.#ctor(Microsoft.Extensions.Logging.ILogger{CopilotModeler.Services.MlNetTrainer})">
+			<summary>
+				Initializes a new instance of the <see cref="T:CopilotModeler.Services.MlNetTrainer" /> class.
+			</summary>
+			<param name="logger">
+				The <see cref="T:Microsoft.Extensions.Logging.ILogger`1" /> instance used for logging ML.NET events and messages.
+			</param>
+		</member>
+		<member name="M:CopilotModeler.Services.MlNetTrainer.CreatePredictionEngine(Microsoft.ML.ITransformer)">
+			<summary>
+				Creates a PredictionEngine for a given model.
+			</summary>
+			<param name="model">The trained ITransformer model.</param>
+			<returns>A PredictionEngine instance.</returns>
+		</member>
+		<member name="M:CopilotModeler.Services.MlNetTrainer.LoadModel(System.String)">
+			<summary>
+				Loads an ML.NET model from a file.
+			</summary>
+			<param name="modelPath">The file path of the model.</param>
+			<returns>The loaded ITransformer model.</returns>
+		</member>
+		<member name="M:CopilotModeler.Services.MlNetTrainer.SaveModel(Microsoft.ML.ITransformer,System.String)">
+			<summary>
+				Saves the trained ML.NET model.
+			</summary>
+			<param name="model">The trained ITransformer model.</param>
+			<param name="modelPath">The file path to save the model to.</param>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.MlNetTrainer.TrainCodeQualityModel(System.Collections.Generic.IEnumerable{CopilotModeler.Data.Models.CodeQualityInput})">
+			<summary>
+				Trains a binary classification model to predict code quality based on the provided training data.
+			</summary>
+			<param name="trainingData">
+				A collection of <see cref="T:CopilotModeler.Data.Models.CodeQualityInput" /> instances representing the training dataset.
+				Each instance includes features such as normalized code, cyclomatic complexity, line count,
+				and other code metrics.
+			</param>
+			<returns>
+				An <see cref="T:Microsoft.ML.ITransformer" /> representing the trained ML.NET model, or <c>null</c> if the
+				training data is empty.
+			</returns>
+			<remarks>
+				The method constructs a training pipeline that includes text featurization, categorical encoding,
+				numeric feature concatenation, and a binary classification trainer using SDCA logistic regression.
+				The trained model can be used for predicting whether code is of high quality.
+			</remarks>
+			<exception cref="T:System.ArgumentNullException">
+				Thrown if <paramref name="trainingData" /> is <c>null</c>.
+			</exception>
+		</member>
+		<member name="T:CopilotModeler.Services.RoslynCodeAnalyzer">
+			<summary>
+				Provides advanced static analysis of C# code using the Roslyn compiler platform.
+				Extracts and serializes code features such as the Abstract Syntax Tree (AST),
+				Control Flow Graph (CFG), Data Flow Graph (DFG), code metrics, and performs
+				code normalization and anonymization for downstream AI/ML tasks.
+			</summary>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.RoslynCodeAnalyzer.#ctor(Microsoft.Extensions.Logging.ILogger{CopilotModeler.Services.RoslynCodeAnalyzer})">
+			<summary>
+				Initializes a new instance of the <see cref="T:CopilotModeler.Services.RoslynCodeAnalyzer" /> class.
+			</summary>
+			<param name="logger">The logger used for diagnostic and debug output.</param>
+		</member>
+		<member name="M:CopilotModeler.Services.RoslynCodeAnalyzer.CreateDocumentFromCode(System.String,System.String)">
+			<summary>
+				Creates a Roslyn <see cref="T:Microsoft.CodeAnalysis.Document" /> instance from the provided source code.
+			</summary>
+			<param name="code">
+				The source code to be included in the document.
+			</param>
+			<param name="fileName">
+				The name of the in-memory file to associate with the document. Defaults to "InMemoryFile.cs".
+			</param>
+			<returns>
+				A <see cref="T:Microsoft.CodeAnalysis.Document" /> containing the specified source code.
+			</returns>
+			<exception cref="T:System.ArgumentNullException">
+				Thrown when <paramref name="code" /> is <c>null</c>.
+			</exception>
+		</member>
+		<member name="M:CopilotModeler.Services.RoslynCodeAnalyzer.FloatArrayToByteArray(System.Single[])">
+			<summary>
+				Converts an array of <see cref="T:System.Single" /> values to an array of <see cref="T:System.Byte" /> values.
+			</summary>
+			<param name="floats">
+				The array of <see cref="T:System.Single" /> values to be converted.
+				Each float in the input array is represented as 4 bytes in the resulting byte array.
+			</param>
+			<returns>
+				A <see cref="T:System.Byte" /> array containing the binary representation of the input
+				<see cref="T:System.Single" /> array.
+			</returns>
+			<exception cref="T:System.ArgumentNullException">
+				Thrown when the input <paramref name="floats" /> array is <c>null</c>.
+			</exception>
+		</member>
+		<member name="M:CopilotModeler.Services.RoslynCodeAnalyzer.AnalyzeCodeAsync(Microsoft.CodeAnalysis.Document)">
+			<summary>
+				Analyzes a C# code document and extracts various code features including AST, CFG, DFG, metrics, normalized code,
+				and anonymization map.
+			</summary>
+			<param name="doccode">The C# code document to analyze.</param>
+			<returns>
+				A <see cref="T:CopilotModeler.Services.CodeAnalysisResult" /> containing AST JSON, CFG JSON, DFG JSON, Metrics JSON, Normalized Code, and
+				Anonymization Map JSON.
+			</returns>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.RoslynCodeAnalyzer.AnonymizeAndNormalizeCode(Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax,System.String)">
+			<summary>
+				Anonymizes and normalizes the provided C# code by renaming identifiers and removing comments.
+				This is useful for preparing code for AI/ML tasks where sensitive or identifiable information
+				needs to be obfuscated while preserving the structural integrity of the code.
+			</summary>
+			<param name="root">
+				The root of the syntax tree representing the parsed C# code.
+			</param>
+			<param name="code">
+				The original C# code as a string.
+			</param>
+			<returns>
+				A tuple containing:
+				<list type="bullet">
+					<item>
+						<description>
+							<c>normalizedCode</c>: The anonymized and normalized version of the input code.
+						</description>
+					</item>
+					<item>
+						<description>
+							<c>anonymizationMapJson</c>: A JSON string representing the mapping of original identifiers
+							to their anonymized counterparts.
+						</description>
+					</item>
+				</list>
+			</returns>
+			<remarks>
+				This method performs basic anonymization by renaming identifiers and removing comments.
+				It is not designed for production-level anonymization and may not handle all edge cases.
+			</remarks>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.RoslynCodeAnalyzer.ExtractCfgDfg(Microsoft.CodeAnalysis.SyntaxTree,Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax)">
+			<summary>
+				Extracts the Control Flow Graph (CFG) and Data Flow Graph (DFG) representations
+				from the provided syntax tree and root node of a C# code document.
+			</summary>
+			<param name="tree">
+				The syntax tree representing the structure of the C# code document.
+			</param>
+			<param name="root">
+				The root node of the syntax tree, typically a
+				<see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax" />.
+			</param>
+			<returns>
+				A tuple containing two JSON strings:
+				<list type="bullet">
+					<item>
+						<description><c>cfgJson</c>: The serialized representation of the Control Flow Graph (CFG).</description>
+					</item>
+					<item>
+						<description><c>dfgJson</c>: The serialized representation of the Data Flow Graph (DFG).</description>
+					</item>
+				</list>
+			</returns>
+			<remarks>
+				This method performs static analysis using Roslyn's semantic model to extract
+				control flow and data flow information for each method in the provided syntax tree.
+				The extracted CFG and DFG are serialized into JSON format for further processing.
+			</remarks>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.RoslynCodeAnalyzer.ExtractCommonAstPropertiesJson(Microsoft.CodeAnalysis.SyntaxNode)">
+			<summary>
+				Extracts the most common AST node properties for ML learning and serializes the result as JSON.
+				How to use:
+				•	Call TestExtractCommonAstPropertiesJson with a C# code string to see the structured AST output in your logs.
+				•	The ExtractCommonAstPropertiesJson method can be used in your analysis pipeline to generate ML-friendly AST
+				representations.
+				What’s included in the AST output:
+				•	Kind: Node type(e.g., ClassDeclaration, MethodDeclaration)
+				•	Name: Identifier/name if present
+				•	Type: Type information if present
+				•	Value: Literal value if present
+				•	Modifiers: Modifiers(e.g., public, static)
+				•	Parameters: For methods, an array of parameter names and types
+				•	Children: Recursively serialized child nodes
+			</summary>
+			<param name="root">The root syntax node (typically CompilationUnitSyntax).</param>
+			<returns>JSON string representing the structured AST with common properties.</returns>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.RoslynCodeAnalyzer.ExtractMetricsJson(Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax)">
+			<summary>
+				Extracts a set of common code metrics from the syntax tree for use in AI/ML training and code analysis.
+				<para>
+					<b>Use Cases:</b>
+					<list type="bullet">
+						<item>Feature extraction for code quality prediction models.</item>
+						<item>Code similarity, classification, or clustering tasks.</item>
+						<item>Code summarization and search.</item>
+					</list>
+				</para>
+				<para>
+					<b>Extracted Metrics:</b>
+					<list type="bullet">
+						<item><c>LineCount</c>: Total number of lines in the file.</item>
+						<item><c>MethodCount</c>: Number of method declarations.</item>
+						<item><c>TotalParameterCount</c>: Total number of parameters across all methods.</item>
+						<item><c>ClassCount</c>: Number of class declarations.</item>
+						<item><c>PropertyCount</c>: Number of property declarations.</item>
+						<item><c>FieldCount</c>: Number of field declarations.</item>
+						<item><c>AverageMethodLength</c>: Average number of lines per method.</item>
+						<item><c>MaxMethodLength</c>: Maximum number of lines in a single method.</item>
+						<item><c>MinMethodLength</c>: Minimum number of lines in a single method.</item>
+						<item><c>CyclomaticComplexity</c>: (Approximate) Cyclomatic complexity summed across all methods.</item>
+					</list>
+				</para>
+				<b>Intent:</b>
+				To provide a rich, ML-friendly set of code metrics that capture structural and complexity-related aspects of the
+				code, enabling downstream AI models to learn from code characteristics.
+			</summary>
+			<param name="root">
+				The root syntax node (typically
+				<see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax" />).
+			</param>
+			<returns>JSON string representing the extracted code metrics.</returns>
+		</member>
+		<member name="T:CopilotModeler.Services.CodeAnalysisResult">
+			<summary>
+				Encapsulates the results of code analysis, including serialized representations
+				of the AST, CFG, DFG, code metrics, normalized code, and the anonymization map.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Services.CodeAnalysisResult.ASTJson">
+			<summary>
+				Gets or sets the JSON representation of the Abstract Syntax Tree (AST).
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Services.CodeAnalysisResult.CFGJson">
+			<summary>
+				Gets or sets the JSON representation of the Control Flow Graph (CFG).
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Services.CodeAnalysisResult.DFGJson">
+			<summary>
+				Gets or sets the JSON representation of the Data Flow Graph (DFG).
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Services.CodeAnalysisResult.MetricsJson">
+			<summary>
+				Gets or sets the JSON representation of the extracted code metrics.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Services.CodeAnalysisResult.NormalizedCode">
+			<summary>
+				Gets or sets the normalized and anonymized version of the analyzed code.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Services.CodeAnalysisResult.AnonymizationMapJson">
+			<summary>
+				Gets or sets the JSON representation of the anonymization map.
+			</summary>
+		</member>
+		<member name="P:CopilotModeler.Services.CodeAnalysisResult.Embeddings">
+			<summary>
+				Gets or sets the byte array representing code embeddings, if available.
+			</summary>
+		</member>
+		<member name="T:CopilotModeler.Services.AnalyzerExtensions">
+			<summary>
+				Provides extension methods for analyzing and manipulating C# syntax elements
+				using the Roslyn compiler platform. These methods enhance the capabilities
+				of working with syntax trees and nodes, enabling advanced code analysis and
+				transformation scenarios.
+			</summary>
+		</member>
+		<member
+			name="M:CopilotModeler.Services.AnalyzerExtensions.GetNextStatement(Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax)">
+			<summary>
+				Retrieves the next statement in the same block as the specified statement.
+			</summary>
+			<param name="stmt">
+				The current statement for which the next statement is to be retrieved.
+			</param>
+			<returns>
+				The next <see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax" /> in the block if it exists; otherwise,
+				returns the current statement or the last statement in the block.
+			</returns>
+			<remarks>
+				This method assumes that the provided statement is part of a
+				<see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.BlockSyntax" />.
+				If the statement is not within a block, the method returns the statement itself.
+			</remarks>
+		</member>
+		<member name="T:CopilotModeler.Training.Trainer">
+			<summary>
+				Represents a trainer for conceptual ML.NET models.
+			</summary>
+		</member>
+		<member
+			name="M:CopilotModeler.Training.Trainer.GetTrainingDataAsync(Microsoft.Extensions.Logging.ILogger,Microsoft.EntityFrameworkCore.IDbContextFactory{CopilotModeler.Data.AIDbContext})">
+			<summary>
+				Prepares and retrieves training data for conceptual ML.NET model training.
+			</summary>
+			<param name="logger">
+				The logger instance used to log information and errors during data preparation.
+			</param>
+			<param name="dbContextFactory">
+				A factory for creating instances of <see cref="T:CopilotModeler.Data.AIDbContext" /> to access the database.
+			</param>
+			<returns>
+				A task that represents the asynchronous operation. The task result contains a list of
+				<see cref="T:CopilotModeler.Data.Models.CodeQualityInput" /> objects, which serve as input data for ML.NET training.
+			</returns>
+			<exception cref="T:System.Exception">
+				Thrown when an error occurs while processing code snippets or accessing the database.
+			</exception>
+		</member>
+		<member
+			name="M:CopilotModeler.Training.Trainer.TrainAndSaveModels(System.Collections.Generic.IEnumerable{CopilotModeler.Data.Models.CodeQualityInput},Microsoft.Extensions.Logging.ILogger{CopilotModeler.Program},CopilotModeler.Services.MlNetTrainer)">
+			<summary>
+				Trains a machine learning model for code quality analysis using the provided training data
+				and saves the trained model to a file. Additionally, demonstrates loading the model and
+				making a sample prediction.
+			</summary>
+			<param name="trainingData">
+				A list of <see cref="T:CopilotModeler.Data.Models.CodeQualityInput" /> objects representing the training data for the model.
+			</param>
+			<param name="logger">
+				An instance of <see cref="T:Microsoft.Extensions.Logging.ILogger`1" /> used for logging information and errors
+				during the training and saving process.
+			</param>
+			<param name="mlNetTrainer"></param>
+		</member>
+		<member name="T:DataExtraction.ExtractOptions">
+			<summary>
+				Represents options for extracting repositories from GitHub.
+			</summary>
+		</member>
+		<member name="P:DataExtraction.ExtractOptions.MinStars">
+			<summary>
+				Gets or sets the minimum number of stars a repository must have to be included in the search.
+				Defaults to 500 if not specified.
+			</summary>
+		</member>
+		<member name="P:DataExtraction.ExtractOptions.NumResultsPerPage">
+			<summary>
+				Gets or sets the number of results to return per page.
+				Defaults to 25 if not specified.
+			</summary>
+		</member>
+		<member name="P:DataExtraction.ExtractOptions.NumPages">
+			<summary>
+				Gets or sets the number of pages of results to retrieve.
+				Defaults to 2 if not specified.
+			</summary>
+		</member>
+		<member name="P:DataExtraction.ExtractOptions.SearchTerm">
+			<summary>
+				Gets or sets the search term to use for querying repositories.
+				Defaults to "pushed:>2025-01-01" if not specified.
+			</summary>
+		</member>
+		<member name="M:DataExtraction.ExtractOptions.ReadArgs(System.String[])">
+			<summary>
+				Reads up to 4 arguments and sets properties.
+				If an argument is missing, the property returns a default value.
+				If an argument is not a valid int (for int properties), the property returns a default value.
+			</summary>
+			<param name="args">The array of arguments to read.</param>
+			<exception cref="T:System.ArgumentNullException">Thrown if <paramref name="args" /> is null.</exception>
+		</member>
+	</members>
+</doc>
